@@ -141,6 +141,11 @@
   .seg { margin: 0 0 14px; }
   .seg .chip { font-size: 13px; padding: 7px 14px; }
   .seg .chip.on { background: var(--dark-warm); border-color: var(--dark-warm); }
+  /* 라벨 줄 안에 작은 토글을 넣어도 옆 칸 입력창과 높이가 같도록 줄 높이를 라벨(12px×1.5)에 고정 */
+  .label-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; height: 18px; margin-bottom: 8px; }
+  .label-row .label { margin-bottom: 0; white-space: nowrap; }
+  .seg.seg-mini { margin: 0; gap: 4px; flex-wrap: nowrap; }
+  .seg.seg-mini .chip { font-size: 12px; padding: 3px 10px; line-height: 1.2; white-space: nowrap; }
   .is-hidden { display: none !important; }
   .fixed-note {
     background: var(--accent-soft); color: var(--accent); border-radius: 10px; padding: 12px 14px;
@@ -410,10 +415,12 @@
       </div>
 
       <div class="input-group">
-        <span class="label">보유 수량</span>
-        <div class="chips seg" id="qm-seg" style="margin-top:0;margin-bottom:8px;">
-          <button class="chip on" data-qm="qty">수량으로</button>
-          <button class="chip" data-qm="amt">투자금으로</button>
+        <div class="label-row">
+          <span class="label">보유 수량</span>
+          <div class="chips seg seg-mini" id="qm-seg">
+            <button class="chip on" data-qm="qty">수량으로</button>
+            <button class="chip" data-qm="amt">투자금으로</button>
+          </div>
         </div>
         <div class="input-wrap" id="qty-wrap">
           <input type="number" id="qty" data-unit="주" value="100" step="1" min="0" aria-label="보유 수량">
