@@ -2,6 +2,7 @@
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
+<script src="https://ttokjaetv.github.io/member-lock.js"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>목표가·손절가 계산기 · 똑재TV</title>
 <meta name="description" content="매수가와 손절 기준만 넣으면 손절가·목표가·손익비, 손절 시 손실액과 목표 도달 시 이익, 감당할 수 있는 손실로 역산한 권장 매수 수량, 손익분기 승률까지 한 번에 계산합니다.">
@@ -574,13 +575,13 @@
     </div>
   </div>
 
-  <div class="card">
+  <div class="card" data-member="승률별 기대값 표">
     <div class="step-label"><div class="step-line"></div><span class="step-text">승률별 기대값</span></div>
     <h3 class="chart-title" id="ev-title">10번 거래하면 얼마가 남을까?</h3>
     <p class="chart-subtitle" id="ev-subtitle">-</p>
     <div class="dl-bar">
-      <button type="button" class="dl-btn" id="dl-csv">CSV 내려받기</button>
-      <button type="button" class="dl-btn" id="dl-xlsx">엑셀(.xlsx) 내려받기</button>
+      <button type="button" class="dl-btn" id="dl-csv" data-member-click="엑셀 내려받기">CSV 내려받기</button>
+      <button type="button" class="dl-btn" id="dl-xlsx" data-member-click="엑셀 내려받기">엑셀(.xlsx) 내려받기</button>
       <span class="dl-note" id="dl-note">엑셀에는 승률별 표와 계산 조건이 함께 들어갑니다</span>
     </div>
     <div class="table-wrap">
