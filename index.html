@@ -836,8 +836,10 @@ function compute(inp) {
   res.recQty = res.maxLoss ? Math.floor(res.maxLoss / lossPS + 1e-9) : null;
   // 승률별 기대값 (10번 거래)
   const rates = [0.3, 0.4, 0.5, 0.6, 0.7];
-  res.ev = rates.map(p => evRow(res, p, false));
-  if (beWin !== null && beWin > 0 && beWin < 1 && !rates.some(p => Math.abs(p - beWin) < 0.0005)) {
+  // 본전 승률이 눈금(40%·50% 등)과 같으면 그 눈금 행을 본전 행으로 바꾸고, 사이에 있으면 행을 하나 끼워 넣음
+  const beOk = beWin !== null && beWin > 0 && beWin < 1;
+  res.ev = rates.map(p => beOk && Math.abs(p - beWin) < 0.0005 ? evRow(res, beWin, true) : evRow(res, p, false));
+  if (beOk && !res.ev.some(e => e.be)) {
     res.ev.push(evRow(res, beWin, true));
     res.ev.sort((a, b) => a.p - b.p);
   }
