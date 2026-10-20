@@ -789,6 +789,11 @@ function pct(v, dec = 1, signed = false) {
 }
 function trim(v, dec = 2) { return String(Math.round(v * Math.pow(10, dec)) / Math.pow(10, dec)); }
 function rrText(r) { return '1:' + trim(r, 2); }
+// 비용 반영 이익이 딱 0이면(왕복 비용 = 목표 폭) 마이너스가 아니라 본전
+function netZero(r) { return Math.abs(r.gainPS) <= 1e-9 * r.P; }
+function rrNetText(r) { return netZero(r) ? rrText(0) + '(본전)' : r.rrNet > 0 ? rrText(r.rrNet) : '마이너스'; }
+// 금액 뒤 조사: 국내 '…원'은 받침 있음(을·으로), 미국 '$…'는 '달러'로 읽어 받침 없음(를·로)
+function moneyJo(s, withBatchim, noBatchim) { return s + (/원$/.test(s) ? withBatchim : noBatchim); }
 
 // ============== 입력 읽기 ==============
 function val(id) { const v = parseFloat($(id).value); return isFinite(v) ? v : NaN; }
@@ -877,8 +882,9 @@ function render() {
   const be = r.beWin;
   let sub = `손절에 걸리면 <strong>${money(-r.lossAmt, true)}</strong>(${pct(-r.lossRate, 1, true)}), 목표에 닿으면 <strong>${money(r.gainAmt, true)}</strong>(${pct(r.gainRate, 1, true)})입니다. `;
   if (be !== null) sub += `10번 중 <strong>${trim(be * 10, 1)}번</strong>만 목표에 닿아도 본전입니다(손익분기 승률 ${pct(be)}).`;
+  else if (netZero(r)) sub += `<strong>왕복 비용이 목표 수익과 같아서 목표가에 팔아도 본전(0원)</strong>입니다. 목표를 높이거나 비용을 줄여야 이익이 납니다.`;
   else sub += `<strong>왕복 비용이 목표 수익보다 커서 목표가에 팔아도 손해</strong>입니다. 목표를 높이거나 비용을 줄여야 합니다.`;
-  if (costOn) sub += ` 왕복 비용 ${trim(inp.cost, 3)}%를 반영한 손익비는 ${r.rrNet > 0 ? rrText(r.rrNet) : '마이너스'}입니다.`;
+  if (costOn) sub += ` 왕복 비용 ${trim(inp.cost, 3)}%를 반영한 손익비는 ${rrNetText(r)}입니다.`;
   $('verdict-sub').innerHTML = sub;
 
   // stat cards
@@ -887,12 +893,12 @@ function render() {
   $('s2-value').textContent = money(r.gainAmt, true);
   $('s2-sub').textContent = `이익률 ${pct(r.gainRate, 1, true)} · 목표가 ${money(r.T)}${costOn ? ' · 비용 차감' : ''}`;
   $('s3-value').textContent = be !== null ? pct(be) : '불가';
-  $('s3-sub').textContent = be !== null ? `손익비 ${rrText(r.rrGross)}${costOn ? ` (비용 반영 ${rrText(r.rrNet)})` : ''} · 이보다 자주 맞히면 플러스` : '목표가에 팔아도 비용 때문에 손해';
+  $('s3-sub').textContent = be !== null ? `손익비 ${rrText(r.rrGross)}${costOn ? ` (비용 반영 ${rrText(r.rrNet)})` : ''} · 이보다 자주 맞히면 플러스` : netZero(r) ? '목표가에 팔아도 비용을 빼면 본전(0원)' : '목표가에 팔아도 비용 때문에 손해';
   if (r.recQty !== null) {
     $('s4-value').textContent = r.recQty.toLocaleString() + '주';
     const diff = r.qty - r.recQty;
     $('s4-sub').textContent = r.recQty < 1
-      ? `최대 손실 ${money(r.maxLoss)}로는 1주도 어렵습니다 (1주 손실 ${money(r.lossPS)})`
+      ? `최대 손실 ${moneyJo(money(r.maxLoss), '으로는', '로는')} 1주도 어렵습니다 (1주 손실 ${money(r.lossPS)})`
       : `약 ${money(r.recQty * r.P)} 어치 · 최대 손실 ${money(r.maxLoss)} 기준 · ` + (diff > 0 ? `지금 수량이 ${diff.toLocaleString()}주 많습니다` : '지금 수량은 한도 안입니다');
   } else {
     $('s4-value').textContent = '-';
@@ -970,13 +976,13 @@ function renderLadder(r) {
     html += `<div class="ladder-row${l.kind === 'minor' ? ' minor' : ''}" style="top:${ly[i]}px">${chip}<span class="lr-price">${money(l.price)}</span>${pctTxt}<span class="lr-amt ${amtCls}">${money(amt, true)}</span></div>`;
   });
   box.innerHTML = html;
-  $('ladder-subtitle').textContent = `매수가 ${money(r.P)}를 기준으로 위는 이익, 아래는 손실 구간입니다. 눈금은 매수가 대비 ${pct(step, step < 0.05 ? 1 : 0)} 간격입니다.`;
+  $('ladder-subtitle').textContent = `매수가 ${moneyJo(money(r.P), '을', '를')} 기준으로 위는 이익, 아래는 손실 구간입니다. 눈금은 매수가 대비 ${pct(step, step < 0.05 ? 1 : 0)} 간격입니다.`;
   $('ladder-note').textContent = `오른쪽 금액 = 그 가격에 ${r.qty.toLocaleString()}주를 모두 팔았을 때 손익` + (r.c > 0 ? ' (왕복 비용 반영)' : '');
 }
 
 function renderEV(r, inp) {
   const be = r.beWin;
-  $('ev-subtitle').textContent = `${r.qty.toLocaleString()}주로 같은 조건의 거래를 10번 한다면? 목표 도달 1번 ${money(r.gainAmt, true)}, 손절 1번 ${money(-r.lossAmt, true)}로 계산했습니다.`
+  $('ev-subtitle').textContent = `${r.qty.toLocaleString()}주로 같은 조건의 거래를 10번 한다면? 목표 도달 1번 ${money(r.gainAmt, true)}, 손절 1번 ${moneyJo(money(-r.lossAmt, true), '으로', '로')} 계산했습니다.`
     + (be !== null ? ` 강조된 행이 본전이 되는 승률(${pct(be)})입니다.` : ' 비용 때문에 어느 승률에서도 플러스가 되지 않습니다.');
   $('ev-body').innerHTML = r.ev.map(e => {
     const cls = e.ev > 0.5 ? 'c-green' : (e.ev < -0.5 ? 'c-accent' : '');
@@ -1044,7 +1050,7 @@ function resultText(r, inp) {
   lines.push(`매수가 ${money(r.P)} × ${r.qty.toLocaleString()}주 (매수금액 ${money(r.invest)})`);
   lines.push(`손절가 ${money(r.S)} (${pct(r.stopPct, 1, true)}) → 손실 ${money(-r.lossAmt, true)}`);
   lines.push(`목표가 ${money(r.T)} (${pct(r.targetPct, 1, true)}) → 이익 ${money(r.gainAmt, true)}`);
-  lines.push(`손익비 ${rrText(r.rrGross)}` + (r.c > 0 ? ` (왕복 비용 ${trim(inp.cost, 3)}% 반영 ${r.rrNet > 0 ? rrText(r.rrNet) : '마이너스'})` : '') + ` · 손익분기 승률 ${r.beWin !== null ? pct(r.beWin) : '불가'}`);
+  lines.push(`손익비 ${rrText(r.rrGross)}` + (r.c > 0 ? ` (왕복 비용 ${trim(inp.cost, 3)}% 반영 ${rrNetText(r)})` : '') + ` · 손익분기 승률 ${r.beWin !== null ? pct(r.beWin) : '불가'}`);
   if (r.recQty !== null) lines.push(`최대 손실 ${money(r.maxLoss)} 기준 권장 수량 ${r.recQty.toLocaleString()}주`);
   lines.push(buildUrl(inp));
   return lines.join('\n');
