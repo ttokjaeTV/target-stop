@@ -345,7 +345,8 @@
     .ladder-row .lr-pct.key { display: none; }
   }
   .scroll-hint { display: none; margin: 12px 0 -8px; text-align: center; font-size: 12px; font-weight: 700; color: var(--ink-mute); }
-  @media (max-width: 600px) { .scroll-hint { display: block; } }
+  @media (max-width: 596px) { .scroll-hint.sh-596 { display: block; } }
+  @media print { .scroll-hint { display: none !important; } }
 </style>
 </head>
 <body>
@@ -587,7 +588,7 @@
       <button type="button" class="dl-btn" id="dl-xlsx" data-member-click="엑셀 내려받기">엑셀(.xlsx) 내려받기</button>
       <span class="dl-note" id="dl-note">엑셀에는 승률별 표와 계산 조건이 함께 들어갑니다</span>
     </div>
-    <p class="scroll-hint" aria-hidden="true">← 옆으로 밀어 보세요 →</p>
+    <p class="scroll-hint sh-596" aria-hidden="true">← 옆으로 밀어 보세요 →</p>
     <div class="table-wrap">
       <table class="data-table ev-table">
         <thead>
